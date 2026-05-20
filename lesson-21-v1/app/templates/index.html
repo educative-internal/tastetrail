@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="page">
+    {% if current_user %}
+    <section class="compose-card" aria-labelledby="compose-heading">
+        <h2 id="compose-heading" class="section-title">Create a post</h2>
+        <p class="section-hint">Upload a photo and add a caption to share with the feed.</p>
+
+        <form class="compose-form" action="{{ url_for('main.create_post') }}" method="post" enctype="multipart/form-data">
+            <label class="file-picker">
+                <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required>
+                <span class="file-picker-label">Choose photo</span>
+                <span class="file-picker-name" data-file-name>No file chosen</span>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Caption</span>
+                <textarea name="caption" rows="3" maxlength="2200" placeholder="Write a caption..."></textarea>
+            </label>
+
+            <button type="submit" class="btn btn-primary">Share post</button>
+        </form>
+    </section>
+    {% else %}
+    <section class="guest-prompt" aria-labelledby="guest-heading">
+        <h2 id="guest-heading" class="section-title">Share with an account</h2>
+        <p class="section-hint">Sign up or log in to create posts and comment on the feed.</p>
+        <div class="guest-actions">
+            <a href="{{ url_for('main.signup') }}" class="btn btn-primary">Sign up</a>
+            <a href="{{ url_for('main.login') }}" class="btn btn-ghost">Log in</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="feed" aria-labelledby="feed-heading">
+        <h2 id="feed-heading" class="section-title">Feed</h2>
+
+        {% if posts %}
+            <ul class="post-list">
+                {% for post in posts %}
+                <li class="post-card" id="post-{{ post.id }}">
+                    <article>
+                        <header class="post-header">
+                            <div class="post-meta">
+                                <span class="post-author">@{{ post.author.username }}</span>
+                                <time datetime="{{ post.created_at.isoformat() }}Z">
+                                    {{ post.created_at.strftime('%b %d, %Y') }}
+                                </time>
+                            </div>
+                            {% if current_user and post.user_id == current_user.id %}
+                            <form
+                                class="delete-form"
+                                action="{{ url_for('main.delete_post', post_id=post.id) }}"
+                                method="post"
+                                data-confirm="Remove this post from the feed? This cannot be undone."
+                            >
+                                <button type="submit" class="btn-text btn-danger">Delete</button>
+                            </form>
+                            {% endif %}
+                        </header>
+
+                        <figure class="post-media">
+                            <img
+                                src="{{ url_for('main.uploaded_file', filename=post.image_filename) }}"
+                                alt="Post by {{ post.author.username }}"
+                                loading="lazy"
+                            >
+                        </figure>
+
+                        <div class="post-actions">
+                            <form action="{{ url_for('main.toggle_like', post_id=post.id) }}" method="post" class="like-form">
+                                {% set liked = post.id in liked_post_ids %}
+                                <button
+                                    type="submit"
+                                    class="btn-icon like-btn {% if liked %}is-liked{% endif %}"
+                                    aria-pressed="{{ 'true' if liked else 'false' }}"
+                                    aria-label="{% if liked %}Unlike post{% else %}Like post{% endif %}"
+                                >
+                                    <span class="heart" aria-hidden="true">{% if liked %}♥{% else %}♡{% endif %}</span>
+                                </button>
+                            </form>
+                            <p class="like-count">
+                                <strong>{{ post.like_count() }}</strong>
+                                {{ 'like' if post.like_count() == 1 else 'likes' }}
+                            </p>
+                        </div>
+
+                        {% if post.caption %}
+                        <p class="post-caption">
+                            <span class="caption-author">@{{ post.author.username }}</span>
+                            {{ post.caption }}
+                        </p>
+                        {% endif %}
+
+                        <section class="comments-block" aria-label="Comments">
+                            {% if post.comments %}
+                            <ul class="comment-list">
+                                {% for comment in post.comments %}
+                                <li class="comment">
+                                    <p class="comment-text">
+                                        <span class="comment-author">@{{ comment.author.username }}</span>
+                                        {{ comment.body }}
+                                    </p>
+                                    <time class="comment-time" datetime="{{ comment.created_at.isoformat() }}Z">
+                                        {{ comment.created_at.strftime('%I:%M %p') }}
+                                    </time>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="comments-empty">No comments yet.</p>
+                            {% endif %}
+
+                            {% if current_user %}
+                            <form
+                                class="comment-form"
+                                action="{{ url_for('main.add_comment', post_id=post.id) }}"
+                                method="post"
+                            >
+                                <label class="sr-only" for="comment-{{ post.id }}">Add a comment</label>
+                                <input
+                                    id="comment-{{ post.id }}"
+                                    type="text"
+                                    name="body"
+                                    maxlength="500"
+                                    placeholder="Add a comment..."
+                                    required
+                                >
+                                <button type="submit" class="btn btn-ghost">Post</button>
+                            </form>
+                            {% else %}
+                            <p class="comments-signin">
+                                <a href="{{ url_for('main.login', next=request.url) }}">Log in</a> to comment.
+                            </p>
+                            {% endif %}
+                        </section>
+                    </article>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <section class="empty-feed">
+                <p>No posts yet.</p>
+                {% if current_user %}
+                <p class="empty-feed-hint">Share the first photo above to start the feed.</p>
+                {% else %}
+                <p class="empty-feed-hint">Sign up and share the first photo to start the feed.</p>
+                {% endif %}
+            </section>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up · InstaLite{% endblock %}
+
+{% block content %}
+<main class="page page-narrow">
+    <section class="auth-card" aria-labelledby="signup-heading">
+        <h1 id="signup-heading" class="auth-title">Create your account</h1>
+        <p class="auth-hint">Join InstaLite to share photos and join the feed.</p>
+
+        <form class="auth-form" action="{{ url_for('main.signup') }}" method="post">
+            <label class="field">
+                <span class="field-label">Username</span>
+                <input
+                    type="text"
+                    name="username"
+                    value="{{ username or '' }}"
+                    maxlength="30"
+                    pattern="[A-Za-z0-9_]{3,30}"
+                    autocomplete="username"
+                    required
+                >
+            </label>
+
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ email or '' }}"
+                    autocomplete="email"
+                    required
+                >
+            </label>
+
+            <label class="field">
+                <span class="field-label">Password</span>
+                <input
+                    type="password"
+                    name="password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+            </label>
+
+            <label class="field">
+                <span class="field-label">Confirm password</span>
+                <input
+                    type="password"
+                    name="confirm_password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+            </label>
+
+            <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        </form>
+
+        <p class="auth-switch">
+            Already have an account?
+            <a href="{{ url_for('main.login') }}">Log in</a>
+        </p>
+    </section>
+</main>
+{% endblock %}
